@@ -36,10 +36,13 @@ const SpotifyAuth = () => {
     useEffect(() => {
         const tokenInfo: Token | undefined = window.location.hash ? getAccessToken(window.location.hash) : undefined;
         if (tokenInfo) {
-            console.log(tokenInfo);
+            //TODO: Add a better way to store the token
+            localStorage.clear();
+            localStorage.setItem("access_token", tokenInfo.access_token);
+            localStorage.setItem("token_type", tokenInfo.token_type);
+            localStorage.setItem("expires_in", tokenInfo.expires_in);
         }
     })
-
 
     return (
         <div className="spotify-auth">
