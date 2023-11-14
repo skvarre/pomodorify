@@ -1,3 +1,5 @@
+import React, {useEffect} from "react";
+
 const SpotifyAuth = () => {
     const CLIENT_ID = "30a645b392a841129954664047e4b6cf";
     const REDIRECT_URI = "http://localhost:3000/callback";
@@ -15,6 +17,31 @@ const SpotifyAuth = () => {
         window.location.href = spotifyAuthUrl;
     };
 
+    const getAccessToken = (hash: string): Token | undefined => { 
+        const stringAfterHashtag = hash.substring(1);
+        const paramsInUrl = stringAfterHashtag.split("&");
+        return paramsInUrl.reduce((accumulator: any, currentValue) => {
+            const [key, value] = currentValue.split("=");
+            accumulator[key] = value;
+            return accumulator;
+        }, {});
+    }
+
+    type Token = {
+        access_token: string;
+        token_type: string;
+        expires_in: string;
+        state: string;
+    }
+
+    useEffect(() => {
+        const tokenInfo: Token | undefined = window.location.hash ? getAccessToken(window.location.hash) : undefined;
+        if (tokenInfo) {
+            console.log(tokenInfo);
+        }
+    })
+
+
     return (
         <div className="spotify-auth">
             <button className="btn btn-success btn-lg" onClick={handleLogin}>
@@ -24,9 +51,5 @@ const SpotifyAuth = () => {
     );
 
 }
-
-
-
-
 
 export default SpotifyAuth;
