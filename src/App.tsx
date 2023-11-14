@@ -1,9 +1,11 @@
 import React from 'react';
+import SpotifyAuth from './SpotifyAuth';
 
 function App() {
-  return (
+return (
     <div className="">
       <header className="">
+        <SpotifyAuth /> 
       </header>
     </div>
   );
