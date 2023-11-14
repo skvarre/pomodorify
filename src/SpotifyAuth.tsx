@@ -1,6 +1,6 @@
 const SpotifyAuth = () => {
     const CLIENT_ID = "30a645b392a841129954664047e4b6cf";
-    const REDIRECT_URI = "http://localhost:3000";
+    const REDIRECT_URI = "http://localhost:3000/callback";
     const SPOTIFY_AUTHORIZE_ENDPOINT = "https://accounts.spotify.com/authorize";
     const scopes = [
         "user-read-currently-playing",
