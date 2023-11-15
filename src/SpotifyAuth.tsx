@@ -17,6 +17,8 @@ const SpotifyAuth = () => {
         window.location.href = spotifyAuthUrl;
     };
 
+    //TODO: Generate a state to prevent CSRF attacks
+
     const getAccessToken = (hash: string): Token | undefined => { 
         const stringAfterHashtag = hash.substring(1);
         const paramsInUrl = stringAfterHashtag.split("&");
@@ -36,7 +38,7 @@ const SpotifyAuth = () => {
     useEffect(() => {
         const tokenInfo: Token | undefined = window.location.hash ? getAccessToken(window.location.hash) : undefined;
         if (tokenInfo) {
-            //TODO: Add a better way to store the token
+            //TODO: Consider using a server-side authentication flow instead of client-side
             localStorage.clear();
             localStorage.setItem("access_token", tokenInfo.access_token);
             localStorage.setItem("token_type", tokenInfo.token_type);
