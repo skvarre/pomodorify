@@ -12,17 +12,10 @@ function App() {
     }
   }, []);
 
-  //Clear the token if it is expired
+  //Clear localstorage on page refresh
   useEffect(() => {
-    const expiresIn = localStorage.getItem("expires_in");
-    if (expiresIn) {
-      setTimeout(() => {
-        localStorage.clear();
-        setToken('');
-      }, Number(expiresIn) * 1000);
-    }
-  }, [token]);
-  
+    localStorage.clear();
+  }, []);
 
 return (
     <div className="">
