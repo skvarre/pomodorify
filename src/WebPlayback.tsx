@@ -4,9 +4,36 @@ type WebPlaybackProps = {
     token: string | null;
 };
 
+type Track = {
+    name: string;
+    album: {
+        images: [
+            { url: string }
+        ]
+    };
+    artists: [
+        { name: string }
+    ];
+};
+
+const track: Track = {
+    name: "",
+    album: {
+        images: [
+            { url: "" }
+        ]
+    },
+    artists: [
+        { name: "" }
+    ]
+};
+
 
 const WebPlayback: React.FC<WebPlaybackProps> = ( {token} ) => {
     const [player, setPlayer] = useState<Spotify.Player | undefined>(undefined);
+    const [is_paused, setPaused] = useState(false);
+    const [is_active, setActive] = useState(false);
+    const [current_track, setTrack] = useState(track);
     
     useEffect(() => {
         const script = document.createElement("script");
