@@ -4,19 +4,7 @@ type WebPlaybackProps = {
     token: string | null;
 };
 
-type Track = {
-    name: string;
-    album: {
-        images: [
-            { url: string }
-        ]
-    };
-    artists: [
-        { name: string }
-    ];
-};
-
-const track: Track = {
+const track = {
     name: "",
     album: {
         images: [
@@ -61,7 +49,23 @@ const WebPlayback: React.FC<WebPlaybackProps> = ( {token} ) => {
             });
     
     
-            player.connect();            
+            player.connect();
+            
+            player.addListener('player_state_changed', ( state => {
+
+                if (!state) {
+                    return;
+                }
+            
+                setTrack(state.track_window.current_track);
+                setPaused(state.paused);
+            
+            
+                player.getCurrentState().then( state => { 
+                    (!state)? setActive(false) : setActive(true) 
+                });
+            
+            }));
 
         };
 
@@ -71,13 +75,25 @@ const WebPlayback: React.FC<WebPlaybackProps> = ( {token} ) => {
 
     return (
         <>
-            <div className="container">
-                <div className="main-wrapper">
-                    
-                    <h1>Web Playback SDK</h1>
+        <div className="container">
+            <h1>Spotify Web Playback SDK</h1>
+            <div className="main-wrapper">
+                <img src={current_track.album.images[0].url} 
+                     className="now-playing__cover" alt="" />
+
+                <div className="now-playing__side">
+                    <div className="now-playing__name">{
+                                  current_track.name
+                                  }</div>
+
+                    <div className="now-playing__artist">{
+                                  current_track.artists[0].name
+                                  }</div>
                 </div>
             </div>
-        </>
+        </div>
+        
+     </>
     );
 }
 
