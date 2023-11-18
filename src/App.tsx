@@ -12,10 +12,13 @@ function App() {
     }
   }, []);
 
+    
   //Clear localstorage on page refresh
   useEffect(() => {
     localStorage.clear();
   }, []);
+  
+
 
 return (
     <div className="">
