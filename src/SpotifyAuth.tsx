@@ -8,6 +8,8 @@ const SpotifyAuth = () => {
         "user-read-currently-playing",
         "user-read-playback-state",
         "streaming",
+        "user-read-email",
+        "user-read-private"
     ];
     const SCOPES_URL_PARAM = scopes.join("%20");
 
