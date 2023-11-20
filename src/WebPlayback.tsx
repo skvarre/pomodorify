@@ -30,10 +30,11 @@ const WebPlayback: React.FC<WebPlaybackProps> = ( {token} ) => {
 
         document.body.appendChild(script);  
 
+
         window.onSpotifyWebPlaybackSDKReady = () => {
 
             const player = new window.Spotify.Player({
-                name: 'Web Playback SDK',
+                name: 'Pomodorify',
                 getOAuthToken: cb => { cb(token ?? ''); },
                 volume: 0.5
             });
@@ -64,6 +65,7 @@ const WebPlayback: React.FC<WebPlaybackProps> = ( {token} ) => {
                     console.log('Current State', state);
                     (!state)? setActive(false) : setActive(true) 
                 });
+
                 
             }));
 
@@ -74,7 +76,7 @@ const WebPlayback: React.FC<WebPlaybackProps> = ( {token} ) => {
             });
 
         };  
-    }, []);
+    }, [token]);
 
 
     if (!is_active) { 
@@ -102,7 +104,7 @@ const WebPlayback: React.FC<WebPlaybackProps> = ( {token} ) => {
                                 &lt;&lt;
                             </button>
 
-                            <button className="btn-spotify" onClick={() => { player?.togglePlay() }} >
+                            <button className="btn-spotify" onClick={() => { player!.togglePlay() }} >
                                 { is_paused ? "PLAY" : "PAUSE" }
                             </button>
 

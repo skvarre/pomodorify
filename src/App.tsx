@@ -13,10 +13,10 @@ function App() {
   }, []);
 
     
-  //Clear localstorage on page refresh
-  useEffect(() => {
-    localStorage.clear();
-  }, []);
+  // //Clear localstorage on page refresh
+  // useEffect(() => {
+  //   localStorage.clear();
+  // }, []);
   
 
 
