@@ -18,6 +18,7 @@ function App() {
     });
   }, []);
 
+  // TODO: TEMPORARY SOLUTION. FIX THIS
   const handleLogin = () => {
     const popup = window.open('http://localhost:8888/login', 'Login with Spotify', 'width=800,height=600');
   };
@@ -53,7 +54,7 @@ function App() {
     setIsActive(false);
     if (spotifyPlayer) {
       spotifyPlayer.pause();
-      // Optionally, you could seek to the beginning of the current track
+      // Maybe.
       // spotifyPlayer.seek(0);
     }
   };
