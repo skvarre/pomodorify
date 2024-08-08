@@ -3,16 +3,13 @@ import React, { useState, useEffect } from 'react';
 type TimerProps = {
   initialTime: number;
   onTimerEnd: () => void;
+  isActive: boolean;
+  onToggleTimer: () => void;
+  onResetTimer: () => void;
 };
 
-const Timer: React.FC<TimerProps> = ({ initialTime, onTimerEnd }) => {
+const Timer: React.FC<TimerProps> = ({ initialTime, onTimerEnd, isActive, onToggleTimer, onResetTimer }) => {
   const [time, setTime] = useState(initialTime);
-  const [isActive, setIsActive] = useState(false);
-
-  useEffect(() => {
-    setTime(initialTime);
-    setIsActive(false);
-  }, [initialTime]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -23,7 +20,6 @@ const Timer: React.FC<TimerProps> = ({ initialTime, onTimerEnd }) => {
       }, 1000);
     } else if (time === 0) {
       onTimerEnd();
-      setIsActive(false);
     }
 
     return () => {
@@ -31,19 +27,19 @@ const Timer: React.FC<TimerProps> = ({ initialTime, onTimerEnd }) => {
     };
   }, [isActive, time, onTimerEnd]);
 
-  const toggleTimer = () => {
-    setIsActive(!isActive);
-  };
-
-  const resetTimer = () => {
+  useEffect(() => {
     setTime(initialTime);
-    setIsActive(false);
-  };
+  }, [initialTime]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleReset = () => {
+    setTime(initialTime);
+    onResetTimer();
   };
 
   return (
@@ -52,13 +48,13 @@ const Timer: React.FC<TimerProps> = ({ initialTime, onTimerEnd }) => {
       <div className="space-x-4">
         <button 
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={toggleTimer}
+          onClick={onToggleTimer}
         >
           {isActive ? 'Pause' : 'Start'}
         </button>
         <button 
           className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-          onClick={resetTimer}
+          onClick={handleReset}
         >
           Reset
         </button>

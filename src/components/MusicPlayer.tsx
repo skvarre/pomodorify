@@ -5,12 +5,12 @@ const spotifyApi = new SpotifyWebApi();
 
 interface MusicPlayerProps {
   accessToken: string;
+  setPlayer: (player: Spotify.Player) => void;
+  isActive: boolean;
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken }) => {
-  const [player, setPlayer] = useState<Spotify.Player | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isActive, setIsActive] = useState(false);
+const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken, setPlayer, isActive }) => {
+  const [isPaused, setIsPaused] = useState(!isActive);
   const [currentTrack, setCurrentTrack] = useState<Spotify.Track | null>(null);
 
   useEffect(() => {
@@ -35,10 +35,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken }) => {
         spotifyApi.transferMyPlayback([device_id]);
       });
 
-      player.addListener('not_ready', ({ device_id }) => {
-        console.log('Device ID has gone offline', device_id);
-      });
-
       player.addListener('player_state_changed', (state) => {
         if (!state) {
           return;
@@ -46,37 +42,35 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken }) => {
 
         setCurrentTrack(state.track_window.current_track);
         setIsPaused(state.paused);
-
-        player.getCurrentState().then(state => {
-          setIsActive(!!state);
-        });
       });
 
       player.connect();
     };
-  }, [accessToken]);
+  }, [accessToken, setPlayer]);
+
+  useEffect(() => {
+    if (isActive && isPaused) {
+      spotifyApi.play();
+    } else if (!isActive && !isPaused) {
+      spotifyApi.pause();
+    }
+  }, [isActive, isPaused]);
 
   const handlePlayPause = () => {
-    player?.togglePlay();
+    if (isPaused) {
+      spotifyApi.play();
+    } else {
+      spotifyApi.pause();
+    }
   };
 
   const handleNextTrack = () => {
-    player?.nextTrack();
+    spotifyApi.skipToNext();
   };
 
   const handlePreviousTrack = () => {
-    player?.previousTrack();
+    spotifyApi.skipToPrevious();
   };
-
-  if (!isActive) {
-    return (
-      <div className="container">
-        <div className="main-wrapper">
-          <b> ERROR: Instance not active.</b>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mt-4">
