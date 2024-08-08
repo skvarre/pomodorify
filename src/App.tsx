@@ -1,29 +1,23 @@
-import React, {useEffect, useState} from 'react';
-import SpotifyAuth from './SpotifyAuth';
-import WebPlayback from './WebPlayback';
+import React from 'react';
+import logo from './logo.svg';
+import './App.css';
 
 function App() {
-  const [token, setToken] = useState<string | null>('');
-
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      setToken(token);
-    }
-  }, []);
-
-    
-  // //Clear localstorage on page refresh
-  // useEffect(() => {
-  //   localStorage.clear();
-  // }, []);
-  
-
-
-return (
-    <div className="">
-      <header className="">
-        {(token === '') ? <SpotifyAuth /> : <WebPlayback token={token} /> }
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.tsx</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
       </header>
     </div>
   );
