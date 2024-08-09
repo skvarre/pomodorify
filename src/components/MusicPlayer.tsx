@@ -93,7 +93,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
     await spotifyFetch(`/me/player/${direction}`, { method: 'POST' });
     await getCurrentPlayback();
   }, [spotifyFetch, getCurrentPlayback]);
-
+  
   const initializeSpotifyPlayer = useCallback(() => {
     if (!window.Spotify) {
       console.error('Spotify SDK not loaded');
