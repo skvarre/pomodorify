@@ -34,7 +34,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
           'Content-Type': 'application/json',
         },
       });
-
+  
       if (!response.ok) {
         if (response.status === 401) {
           onAuthError();
@@ -42,9 +42,20 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
         }
         throw new Error(`Spotify API error: ${response.status}`);
       }
-
+  
       const text = await response.text();
-      return text ? JSON.parse(text) : null;
+      // console.log('Spotify API response:', text);
+  
+      if (!text) {
+        return null;
+      }
+  
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        // console.log('Response is not JSON, returning raw text');
+        return text;
+      }
     } catch (error) {
       console.error('Spotify API Error:', error);
       setError('Failed to communicate with Spotify. Please try again.');
@@ -64,8 +75,18 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
   }, [spotifyFetch]);
 
   const togglePlayback = useCallback(async () => {
-    await spotifyFetch(`/me/player/${isPlaying ? 'pause' : 'play'}`, { method: 'PUT' });
-    setIsPlaying(!isPlaying);
+    const response = await spotifyFetch(`/me/player/${isPlaying ? 'pause' : 'play'}`, { method: 'PUT' });
+    if (response !== null) {
+      // If the response is a string (non-JSON), consider it a success
+      if (typeof response === 'string' || response === '') {
+        setIsPlaying(!isPlaying);
+        // console.log('Playback toggled successfully');
+      } else {
+        console.log('Unexpected response:', response);
+      }
+    } else {
+      console.error('Failed to toggle playback');
+    }
   }, [isPlaying, spotifyFetch]);
 
   const handleTrackChange = useCallback(async (direction: 'next' | 'previous') => {
@@ -168,12 +189,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
           <div className="flex items-center justify-between mt-2">
             <button onClick={() => handleTrackChange('previous')} className="focus:outline-none">
               <SkipBack className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
-            </button>
-            <button onClick={togglePlayback} className="focus:outline-none">
-              {isPlaying ? 
-                <Pause className="w-8 h-8 text-white hover:text-gray-300 transition-colors" /> :
-                <Play className="w-8 h-8 text-white hover:text-gray-300 transition-colors" />
-              }
             </button>
             <button onClick={() => handleTrackChange('next')} className="focus:outline-none">
               <SkipForward className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />

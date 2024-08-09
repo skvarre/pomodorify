@@ -13,7 +13,26 @@ function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [completedWorkSessions, setCompletedWorkSessions] = useState(0);
+  const [isSDKReady, setIsSDKReady] = useState(false);
 
+  const loadSpotifySDK = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      if (window.Spotify) {
+        resolve(window.Spotify);
+      } else {
+        window.onSpotifyWebPlaybackSDKReady = () => {
+          resolve(window.Spotify);
+        };
+  
+        const script = document.createElement("script");
+        script.src = "https://sdk.scdn.co/spotify-player.js";
+        script.async = true;
+        script.onerror = (error) => reject(error);
+        document.body.appendChild(script);
+      }
+    });
+  }, []);
+  
   const handleLogin = useCallback(() => {
     if (isAuthenticating) return; // Prevent multiple login attempts
 
@@ -34,6 +53,19 @@ function App() {
     setLoginError('Authentication failed. Please try logging in again.');
     setIsAuthenticating(false);
   }, []);
+
+  useEffect(() => {
+    if (accessToken && !isSDKReady) {
+      loadSpotifySDK()
+        .then(() => {
+          setIsSDKReady(true);
+        })
+        .catch((error) => {
+          console.error("Failed to load Spotify SDK:", error);
+          setLoginError("Failed to load Spotify SDK. Please try again.");
+        });
+    }
+  }, [accessToken, isSDKReady, loadSpotifySDK]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -166,12 +198,16 @@ function App() {
           </button>
         ) : (
           <>
-            <MusicPlayer 
-              accessToken={accessToken} 
-              setPlayer={setSpotifyPlayer} 
-              isActive={isActive} 
-              onAuthError={handleAuthError}
-            />
+            {isSDKReady ? (
+              <MusicPlayer 
+                accessToken={accessToken} 
+                setPlayer={setSpotifyPlayer} 
+                isActive={isActive} 
+                onAuthError={handleAuthError}
+              />
+            ) : (
+              <div className="text-white text-center mb-4">Loading Spotify SDK...</div>
+            )}
             <button 
               onClick={handleLogout} 
               className="w-full mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
