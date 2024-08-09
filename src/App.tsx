@@ -12,6 +12,7 @@ function App() {
   const [breakSessionCount, setBreakSessionCount] = useState(0);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [completedWorkSessions, setCompletedWorkSessions] = useState(0);
 
   const handleLogin = useCallback(() => {
     if (isAuthenticating) return; // Prevent multiple login attempts
@@ -81,9 +82,17 @@ function App() {
   const handleSessionEnd = () => {
     setIsActive(false);
     if (isWorking) {
+      const newCompletedSessions = completedWorkSessions + 1;
+      setCompletedWorkSessions(newCompletedSessions);
       setIsWorking(false);
       setBreakSessionCount((prev) => prev + 1);
-      setTime(5 * 60); // 5 minutes break
+      
+      // Check if it's time for a long break
+      if (newCompletedSessions % 4 === 0) {
+        setTime(15 * 60); // 15 minutes long break
+      } else {
+        setTime(5 * 60); // 5 minutes short break
+      }
     } else {
       setIsWorking(true);
       setWorkSessionCount((prev) => prev + 1);
@@ -97,11 +106,28 @@ function App() {
 
   const handleResetTimer = () => {
     setIsActive(false);
-    setTime(isWorking ? 25 * 60 : 5 * 60);
+    if (isWorking) {
+      setTime(25 * 60); // 25 minutes work
+    } else {
+      // Check if it's a long break
+      const isLongBreak = completedWorkSessions % 4 === 0;
+      setTime(isLongBreak ? 15 * 60 : 5 * 60);
+    }
   };
-  
+
   const handleSkipSession = () => {
-    handleSessionEnd();
+    if (isWorking) {
+      const newCompletedSessions = completedWorkSessions + 1;
+      setCompletedWorkSessions(newCompletedSessions);
+      setIsWorking(false);
+      setBreakSessionCount((prev) => prev + 1);
+      setTime(newCompletedSessions % 4 === 0 ? 15 * 60 : 5 * 60);
+    } else {
+      setIsWorking(true);
+      setWorkSessionCount((prev) => prev + 1);
+      setTime(25 * 60);
+    }
+    setIsActive(false);
   };
 
   return (
@@ -122,7 +148,7 @@ function App() {
           <p className="text-center text-white font-semibold">
             {isWorking 
               ? `Work Session #${workSessionCount}` 
-              : `Break Session #${breakSessionCount}`}
+              : `${completedWorkSessions % 4 === 0 ? 'Long' : 'Short'} Break #${breakSessionCount}`}
           </p>
         </div>
         {loginError && (
