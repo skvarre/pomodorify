@@ -58,8 +58,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
       }
     } catch (error) {
       console.error('Spotify API Error:', error);
-      setError('Failed to communicate with Spotify. Please try again.');
-      return null;
+      // setError('Failed to communicate with Spotify. Please try again.');
+      // return null;
     }
   }, [accessToken, onAuthError]);
 
@@ -138,6 +138,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
     setPlayer(player);
   }, [accessToken, setPlayer, spotifyFetch, getCurrentPlayback]);
 
+  
+
   useEffect(() => {
     if (accessToken && window.Spotify && !playerRef.current) {
       initializeSpotifyPlayer();
@@ -186,12 +188,12 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
         <div className="flex-grow">
           <div className="font-bold truncate">{currentTrack.name}</div>
           <div className="text-gray-400 text-sm truncate">{currentTrack.artists[0]?.name}</div>
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center mt-4 ml-20">
             <button onClick={() => handleTrackChange('previous')} className="focus:outline-none">
               <SkipBack className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
             </button>
             <button onClick={() => handleTrackChange('next')} className="focus:outline-none">
-              <SkipForward className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
+              <SkipForward className="ml-8 w-6 h-6 text-gray-400 hover:text-white transition-colors" />
             </button>
           </div>
         </div>
