@@ -14,6 +14,7 @@ function App() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [completedWorkSessions, setCompletedWorkSessions] = useState(0);
   const [isSDKReady, setIsSDKReady] = useState(false);
+  const [disconnectSpotify, setDisconnectSpotify] = useState<(() => void) | null>(null);
 
   const loadSpotifySDK = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -106,10 +107,19 @@ function App() {
     };
   }, [handleAuthError]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
+    if (spotifyPlayer) {
+      spotifyPlayer.pause().then(() => {
+        if (disconnectSpotify) {
+          disconnectSpotify();
+        }
+      });
+    }
     setAccessToken(null);
     localStorage.removeItem('spotifyAccessToken');
-  };
+    setSpotifyPlayer(null);
+    setDisconnectSpotify(null);
+  }, [spotifyPlayer, disconnectSpotify]);
 
   const handleSessionEnd = () => {
     setIsActive(false);
@@ -202,6 +212,7 @@ function App() {
               <MusicPlayer 
                 accessToken={accessToken} 
                 setPlayer={setSpotifyPlayer} 
+                setDisconnectFunction={setDisconnectSpotify}
                 isActive={isActive} 
                 onAuthError={handleAuthError}
               />

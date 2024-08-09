@@ -4,6 +4,7 @@ import { SkipBack, SkipForward, Play, Pause } from 'lucide-react';
 interface MusicPlayerProps {
   accessToken: string;
   setPlayer: (player: Spotify.Player) => void;
+  setDisconnectFunction: (disconnect: () => void) => void;
   isActive: boolean;
   onAuthError: () => void;
 }
@@ -17,7 +18,7 @@ interface SpotifyTrack {
   };
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPlayer, isActive, onAuthError }) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPlayer, setDisconnectFunction, isActive, onAuthError }) => {
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -63,6 +64,15 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
     }
   }, [accessToken, onAuthError]);
 
+  const disconnectPlayer = useCallback(() => {
+    if (playerRef.current) {
+      playerRef.current.disconnect();
+      playerRef.current = null;
+    }
+    setCurrentTrack(null);
+    setIsPlaying(false);
+  }, []);
+
   const getCurrentPlayback = useCallback(async () => {
     const data = await spotifyFetch('/me/player');
     if (data && data.item) {
@@ -93,7 +103,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
     await spotifyFetch(`/me/player/${direction}`, { method: 'POST' });
     await getCurrentPlayback();
   }, [spotifyFetch, getCurrentPlayback]);
-  
+
   const initializeSpotifyPlayer = useCallback(() => {
     if (!window.Spotify) {
       console.error('Spotify SDK not loaded');
@@ -138,7 +148,9 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
     setPlayer(player);
   }, [accessToken, setPlayer, spotifyFetch, getCurrentPlayback]);
 
-  
+  useEffect(() => {
+    setDisconnectFunction(disconnectPlayer);
+  }, [disconnectPlayer, setDisconnectFunction]);
 
   useEffect(() => {
     if (accessToken && window.Spotify && !playerRef.current) {
