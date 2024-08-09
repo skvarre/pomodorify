@@ -1,63 +1,103 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import SpotifyWebApi from 'spotify-web-api-js';
-import { SkipBack, SkipForward } from 'lucide-react';
-
-const spotifyApi = new SpotifyWebApi();
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { SkipBack, SkipForward, Play, Pause } from 'lucide-react';
 
 interface MusicPlayerProps {
   accessToken: string;
   setPlayer: (player: Spotify.Player) => void;
   isActive: boolean;
+  onAuthError: () => void;
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken, setPlayer, isActive }) => {
-  const [currentTrack, setCurrentTrack] = useState<Spotify.Track | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [initializationStep, setInitializationStep] = useState('Starting initialization');
+interface SpotifyTrack {
+  name: string;
+  artists: { name: string }[];
+  album: {
+    name: string;
+    images: { url: string }[];
+  };
+}
 
-  const handleApiError = useCallback((error: any) => {
-    console.error('Spotify API Error:', error);
-    let errorMessage = 'An unknown error occurred';
-    if (error.response) {
-      errorMessage = `Spotify API error: ${error.response.status} - ${error.response.message}`;
-    } else if (error.message) {
-      errorMessage = `Error: ${error.message}`;
+const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPlayer, isActive, onAuthError }) => {
+  const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const deviceIdRef = useRef<string | null>(null);
+  const playerRef = useRef<Spotify.Player | null>(null);
+
+  const spotifyFetch = useCallback(async (endpoint: string, options: RequestInit = {}) => {
+    try {
+      const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          onAuthError();
+          return null;
+        }
+        throw new Error(`Spotify API error: ${response.status}`);
+      }
+
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    } catch (error) {
+      console.error('Spotify API Error:', error);
+      setError('Failed to communicate with Spotify. Please try again.');
+      return null;
     }
-    setError(errorMessage);
-  }, []);
+  }, [accessToken, onAuthError]);
+
+  const getCurrentPlayback = useCallback(async () => {
+    const data = await spotifyFetch('/me/player');
+    if (data && data.item) {
+      setCurrentTrack(data.item);
+      setIsPlaying(data.is_playing);
+    } else {
+      setCurrentTrack(null);
+      setIsPlaying(false);
+    }
+  }, [spotifyFetch]);
+
+  const togglePlayback = useCallback(async () => {
+    await spotifyFetch(`/me/player/${isPlaying ? 'pause' : 'play'}`, { method: 'PUT' });
+    setIsPlaying(!isPlaying);
+  }, [isPlaying, spotifyFetch]);
+
+  const handleTrackChange = useCallback(async (direction: 'next' | 'previous') => {
+    await spotifyFetch(`/me/player/${direction}`, { method: 'POST' });
+    await getCurrentPlayback();
+  }, [spotifyFetch, getCurrentPlayback]);
 
   const initializeSpotifyPlayer = useCallback(() => {
-    console.log('Initializing Spotify player...');
-    setInitializationStep('Creating Spotify player');
-
     if (!window.Spotify) {
       console.error('Spotify SDK not loaded');
       setError('Spotify SDK not loaded. Please refresh the page.');
       return;
     }
 
+    if (playerRef.current) {
+      console.log('Spotify player already initialized');
+      return;
+    }
+
     const player = new window.Spotify.Player({
       name: 'Pomodorify Web Player',
-      getOAuthToken: cb => { 
-        console.log('Getting OAuth token...');
-        cb(accessToken); 
-      },
+      getOAuthToken: cb => cb(accessToken),
       volume: 0.5
     });
 
     player.addListener('ready', ({ device_id }) => {
       console.log('Spotify player ready with Device ID:', device_id);
-      setInitializationStep('Transferring playback');
-      spotifyApi.transferMyPlayback([device_id])
-        .then(() => {
-          console.log('Playback transferred successfully');
-          setInitializationStep('Playback transferred');
-        })
-        .catch(error => {
-          console.error('Error transferring playback:', error);
-          setInitializationStep('Error transferring playback');
-          handleApiError(error);
-        });
+      deviceIdRef.current = device_id;
+      spotifyFetch('/me/player', {
+        method: 'PUT',
+        body: JSON.stringify({ device_ids: [device_id], play: false })
+      }).then(getCurrentPlayback);
     });
 
     player.addListener('not_ready', ({ device_id }) => {
@@ -66,91 +106,36 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken, setPlayer, isAct
     });
 
     player.addListener('player_state_changed', (state) => {
-      if (!state) {
-        console.log('Player state changed to null');
-        return;
+      if (state) {
+        setCurrentTrack(state.track_window.current_track);
+        setIsPlaying(!state.paused);
       }
-      console.log('Player state changed:', state);
-      setCurrentTrack(state.track_window.current_track);
     });
 
-    player.addListener('initialization_error', ({ message }) => {
-      console.error('Initialization error:', message);
-      setError(`Initialization error: ${message}`);
-    });
-
-    player.addListener('authentication_error', ({ message }) => {
-      console.error('Authentication error:', message);
-      setError(`Authentication error: ${message}`);
-    });
-
-    player.addListener('account_error', ({ message }) => {
-      console.error('Account error:', message);
-      setError(`Account error: ${message}`);
-    });
-
-    setInitializationStep('Connecting to Spotify');
-    player.connect()
-      .then(success => {
-        if (success) {
-          console.log('Spotify Web Playback SDK connected successfully');
-          setInitializationStep('Connected successfully');
-        } else {
-          console.error('Failed to connect to Spotify');
-          setError('Failed to connect to Spotify. Please try again.');
-          setInitializationStep('Connection failed');
-        }
-      })
-      .catch(error => {
-        console.error('Error connecting to Spotify:', error);
-        setInitializationStep('Error during connection');
-        handleApiError(error);
-      });
-
+    player.connect();
+    playerRef.current = player;
     setPlayer(player);
-  }, [accessToken, setPlayer, handleApiError]);
+  }, [accessToken, setPlayer, spotifyFetch, getCurrentPlayback]);
 
   useEffect(() => {
-    if (!accessToken) {
-      console.log('No access token available');
-      return;
+    if (accessToken && window.Spotify && !playerRef.current) {
+      initializeSpotifyPlayer();
     }
-
-    console.log('Setting access token:', accessToken);
-    spotifyApi.setAccessToken(accessToken);
-    
-    initializeSpotifyPlayer();
-
-    return () => {
-      // Cleanup logic if needed
-    };
   }, [accessToken, initializeSpotifyPlayer]);
 
   useEffect(() => {
-    if (currentTrack && spotifyApi.getAccessToken()) {
-      if (isActive) {
-        console.log('Attempting to play...');
-        spotifyApi.play().catch(handleApiError);
-      } else {
-        console.log('Attempting to pause...');
-        spotifyApi.pause().catch(handleApiError);
-      }
+    if (accessToken && deviceIdRef.current) {
+      getCurrentPlayback();
+      const interval = setInterval(getCurrentPlayback, 5000);
+      return () => clearInterval(interval);
     }
-  }, [isActive, currentTrack, handleApiError]);
+  }, [accessToken, getCurrentPlayback]);
 
-  const handleNextTrack = () => {
-    if (spotifyApi.getAccessToken()) {
-      console.log('Skipping to next track...');
-      spotifyApi.skipToNext().catch(handleApiError);
+  useEffect(() => {
+    if (isActive !== isPlaying && deviceIdRef.current) {
+      togglePlayback();
     }
-  };
-
-  const handlePreviousTrack = () => {
-    if (spotifyApi.getAccessToken()) {
-      console.log('Skipping to previous track...');
-      spotifyApi.skipToPrevious().catch(handleApiError);
-    }
-  };
+  }, [isActive, isPlaying, togglePlayback]);
 
   if (error) {
     return (
@@ -161,30 +146,36 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken, setPlayer, isAct
     );
   }
 
+  if (!window.Spotify) {
+    return <div className="text-white text-center">Loading Spotify SDK...</div>;
+  }
+
   if (!currentTrack) {
-    return <div className="text-white text-center">
-      Initializing Spotify player...
-      <br />
-      Current step: {initializationStep}
-    </div>;
+    return <div className="text-white text-center">No active playback. Please start playing a track on Spotify.</div>;
   }
 
   return (
     <div className="bg-gray-800 text-white p-4 rounded-lg shadow-lg max-w-md mx-auto">
       <div className="flex items-center space-x-4">
         <img 
-          src={currentTrack.album.images[0].url} 
+          src={currentTrack.album.images[0]?.url} 
           className="w-20 h-20 rounded-md shadow-md" 
           alt={currentTrack.album.name || "Album cover"} 
         />
         <div className="flex-grow">
           <div className="font-bold truncate">{currentTrack.name}</div>
-          <div className="text-gray-400 text-sm truncate">{currentTrack.artists[0].name}</div>
+          <div className="text-gray-400 text-sm truncate">{currentTrack.artists[0]?.name}</div>
           <div className="flex items-center justify-between mt-2">
-            <button onClick={handlePreviousTrack} className="focus:outline-none">
+            <button onClick={() => handleTrackChange('previous')} className="focus:outline-none">
               <SkipBack className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
             </button>
-            <button onClick={handleNextTrack} className="focus:outline-none">
+            <button onClick={togglePlayback} className="focus:outline-none">
+              {isPlaying ? 
+                <Pause className="w-8 h-8 text-white hover:text-gray-300 transition-colors" /> :
+                <Play className="w-8 h-8 text-white hover:text-gray-300 transition-colors" />
+              }
+            </button>
+            <button onClick={() => handleTrackChange('next')} className="focus:outline-none">
               <SkipForward className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
             </button>
           </div>
@@ -192,6 +183,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ accessToken, setPlayer, isAct
       </div>
     </div>
   );
-}
+});
 
 export default MusicPlayer;

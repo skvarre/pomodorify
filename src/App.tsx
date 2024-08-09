@@ -6,132 +6,100 @@ function App() {
   const [isWorking, setIsWorking] = useState(true);
   const [isActive, setIsActive] = useState(false);
   const [time, setTime] = useState(25 * 60); // 25 minutes
-  const [accessToken, setAccessToken] = useState('');
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [spotifyPlayer, setSpotifyPlayer] = useState<Spotify.Player | null>(null);
   const [workSessionCount, setWorkSessionCount] = useState(1);
   const [breakSessionCount, setBreakSessionCount] = useState(0);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [sdkReady, setSdkReady] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  const loadSpotifySDK = useCallback(() => {
-    return new Promise<void>((resolve, reject) => {
-      if (window.Spotify) {
-        setSdkReady(true);
-        resolve();
-      } else {
-        window.onSpotifyWebPlaybackSDKReady = () => {
-          setSdkReady(true);
-          resolve();
-        };
-        const script = document.createElement("script");
-        script.src = "https://sdk.scdn.co/spotify-player.js";
-        script.async = true;
-        script.onerror = () => reject(new Error("Failed to load Spotify SDK"));
-        document.body.appendChild(script);
-      }
-    });
+  const handleLogin = useCallback(() => {
+    if (isAuthenticating) return; // Prevent multiple login attempts
+
+    setIsAuthenticating(true);
+    const popup = window.open('http://localhost:8888/login', 'Login with Spotify', 'width=800,height=600');
+    
+    if (popup) {
+      popup.focus();
+    } else {
+      setLoginError('Please allow popups for this website to login with Spotify.');
+      setIsAuthenticating(false);
+    }
+  }, [isAuthenticating]);
+
+  const handleAuthError = useCallback(() => {
+    setAccessToken(null);
+    localStorage.removeItem('spotifyAccessToken');
+    setLoginError('Authentication failed. Please try logging in again.');
+    setIsAuthenticating(false);
   }, []);
 
   useEffect(() => {
-    loadSpotifySDK().catch(error => {
-      console.error("Failed to load Spotify SDK:", error);
-      setLoginError("Failed to load Spotify SDK. Please refresh the page.");
-    });
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'SPOTIFY_TOKEN') {
-        console.log("Received Spotify token");
-        setAccessToken(event.data.accessToken);
-        setLoginError(null);
-        localStorage.setItem('spotifyAccessToken', event.data.accessToken);
-      } else if (event.data.type === 'SPOTIFY_ERROR') {
-        console.error("Spotify login error:", event.data.error);
-        setLoginError(event.data.error);
-        setAccessToken('');
-        localStorage.removeItem('spotifyAccessToken');
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    const storedToken = localStorage.getItem('spotifyAccessToken');
-    if (storedToken) {
-      console.log("Found stored token, validating...");
-      fetch('https://api.spotify.com/v1/me', {
-        headers: {
-          'Authorization': `Bearer ${storedToken}`
-        }
-      }).then(response => {
-        if (response.ok) {
-          console.log("Stored token is valid");
-          setAccessToken(storedToken);
-        } else {
-          console.log("Stored token is invalid, removing");
-          localStorage.removeItem('spotifyAccessToken');
-        }
-      }).catch((error) => {
-        console.error("Error validating stored token:", error);
-        localStorage.removeItem('spotifyAccessToken');
-      });
-    }
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [loadSpotifySDK]);
-
-  useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-
     if (isActive && time > 0) {
       interval = setInterval(() => {
         setTime((prevTime) => prevTime - 1);
       }, 1000);
-    } else if (time === 0) {
+    } else if (isActive && time === 0) {
       handleSessionEnd();
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isActive, time]);
 
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'SPOTIFY_TOKEN') {
+        setAccessToken(event.data.accessToken);
+        localStorage.setItem('spotifyAccessToken', event.data.accessToken);
+        setLoginError(null);
+        setIsAuthenticating(false);
+      } else if (event.data.type === 'SPOTIFY_ERROR') {
+        handleAuthError();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    // Check for stored token on component mount
+    const storedToken = localStorage.getItem('spotifyAccessToken');
+    if (storedToken) {
+      setAccessToken(storedToken);
+    }
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [handleAuthError]);
+
+  const handleLogout = () => {
+    setAccessToken(null);
+    localStorage.removeItem('spotifyAccessToken');
+  };
+
   const handleSessionEnd = () => {
     setIsActive(false);
     if (isWorking) {
       setIsWorking(false);
-      setBreakSessionCount(prev => prev + 1);
+      setBreakSessionCount((prev) => prev + 1);
       setTime(5 * 60); // 5 minutes break
     } else {
       setIsWorking(true);
-      setWorkSessionCount(prev => prev + 1);
+      setWorkSessionCount((prev) => prev + 1);
       setTime(25 * 60); // 25 minutes work
     }
   };
 
-  const handleLogin = () => {
-    const popup = window.open('http://localhost:8888/login', 'Login with Spotify', 'width=800,height=600');
-    if (popup) {
-      popup.focus();
-    } else {
-      setLoginError('Please allow popups for this website to login with Spotify.');
-    }
-  };
-
-  const handleLogout = () => {
-    setAccessToken('');
-    localStorage.removeItem('spotifyAccessToken');
-  };
-
   const handleToggleTimer = () => {
-    setIsActive(!isActive);
+    setIsActive((prev) => !prev);
   };
 
   const handleResetTimer = () => {
     setIsActive(false);
     setTime(isWorking ? 25 * 60 : 5 * 60);
   };
-
+  
   const handleSkipSession = () => {
     handleSessionEnd();
   };
@@ -162,21 +130,22 @@ function App() {
             <span className="block sm:inline">{loginError}</span>
           </div>
         )}
-        {!sdkReady && (
-          <div className="text-yellow-300 text-center mb-4">
-            Loading Spotify SDK...
-          </div>
-        )}
-        {sdkReady && !accessToken ? (
+        {!accessToken ? (
           <button 
             onClick={handleLogin} 
             className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
+            disabled={isAuthenticating}
           >
-            Login with Spotify
+            {isAuthenticating ? 'Logging in...' : 'Login with Spotify'}
           </button>
-        ) : sdkReady && accessToken ? (
+        ) : (
           <>
-            <MusicPlayer accessToken={accessToken} setPlayer={setSpotifyPlayer} isActive={isActive} />
+            <MusicPlayer 
+              accessToken={accessToken} 
+              setPlayer={setSpotifyPlayer} 
+              isActive={isActive} 
+              onAuthError={handleAuthError}
+            />
             <button 
               onClick={handleLogout} 
               className="w-full mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
@@ -184,7 +153,7 @@ function App() {
               Logout from Spotify
             </button>
           </>
-        ) : null}
+        )}
       </div>
     </div>
   );
