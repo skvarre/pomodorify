@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Settings as SettingsIcon } from 'lucide-react';
 import Timer from './components/Timer';
 import MusicPlayer from './components/MusicPlayer';
+import Settings from './components/Settings';
 
 function App() {
   const [isWorking, setIsWorking] = useState(true);
@@ -15,6 +17,7 @@ function App() {
   const [completedWorkSessions, setCompletedWorkSessions] = useState(0);
   const [isSDKReady, setIsSDKReady] = useState(false);
   const [disconnectSpotify, setDisconnectSpotify] = useState<(() => void) | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const loadSpotifySDK = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -53,6 +56,14 @@ function App() {
     localStorage.removeItem('spotifyAccessToken');
     setLoginError('Authentication failed. Please try logging in again.');
     setIsAuthenticating(false);
+  }, []);
+
+  const openSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+  }, []);
+
+  const closeSettings = useCallback(() => {
+    setIsSettingsOpen(false);
   }, []);
 
   useEffect(() => {
@@ -235,14 +246,22 @@ function App() {
         <h1 className="text-3xl font-bold text-center text-white mb-8">
           Pomodorify
         </h1>
-        <Timer 
-          time={time}
-          isActive={isActive}
-          isWorking={isWorking}
-          onToggleTimer={handleToggleTimer}
-          onResetTimer={handleResetTimer}
-          onSkipSession={handleSkipSession}
-        />
+        <div className="relative">
+          <Timer 
+            time={time}
+            isActive={isActive}
+            isWorking={isWorking}
+            onToggleTimer={handleToggleTimer}
+            onResetTimer={handleResetTimer}
+            onSkipSession={handleSkipSession}
+          />
+          <button 
+            onClick={openSettings}
+            className="absolute top-2 right-2 text-white hover:text-gray-300 transition-colors"
+          >
+            <SettingsIcon size={28} />
+          </button>
+        </div>
         <div className="bg-gray-800 rounded-full px-6 py-2 mb-6">
           <p className="text-center text-white font-semibold">
             {isWorking 
@@ -286,6 +305,7 @@ function App() {
             </button>
           </>
         )}
+        <Settings isOpen={isSettingsOpen} onClose={closeSettings} />
       </div>
     </div>
   );
