@@ -173,15 +173,22 @@ function App() {
   };
 
   const handleTogglePlayback = useCallback(() => {
-    setIsActive((prevIsActive) => !prevIsActive);
-    if (spotifyPlayer) {
-      if (isActive) {
-        spotifyPlayer.pause();
-      } else {
-        spotifyPlayer.resume();
+    setIsActive((prevIsActive) => {
+      const newIsActive = !prevIsActive;
+      if (spotifyPlayer) {
+        if (newIsActive) {
+          spotifyPlayer.resume();
+        } else {
+          spotifyPlayer.pause();
+        }
       }
-    }
-  }, [isActive, spotifyPlayer]);
+      return newIsActive;
+    });
+  }, [spotifyPlayer]);
+
+  const handleExternalPlaybackChange = useCallback((isPlaying: boolean) => {
+    setIsActive(isPlaying);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -227,6 +234,7 @@ function App() {
                 isActive={isActive} 
                 onAuthError={handleAuthError}
                 onTogglePlayback={handleTogglePlayback}
+                onExternalPlaybackChange={handleExternalPlaybackChange}
               />
             ) : (
               <div className="text-white text-center mb-4">Loading Spotify SDK...</div>

@@ -8,6 +8,7 @@ interface MusicPlayerProps {
   isActive: boolean;
   onAuthError: () => void;
   onTogglePlayback: () => void;
+  onExternalPlaybackChange: (isActive: boolean) => void;
 }
 
 interface SpotifyTrack {
@@ -19,7 +20,7 @@ interface SpotifyTrack {
   };
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPlayer, setDisconnectFunction, isActive, onAuthError, onTogglePlayback }) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPlayer, setDisconnectFunction, isActive, onAuthError, onTogglePlayback, onExternalPlaybackChange }) => {
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -178,6 +179,19 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
       togglePlayback();
     }
   }, [isActive, isPlaying, togglePlayback]);
+
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.addListener('player_state_changed', (state) => {
+        if (state) {
+          setCurrentTrack(state.track_window.current_track);
+          setIsPlaying(!state.paused);
+          // Notify App component about external playback changes
+          onExternalPlaybackChange(!state.paused);
+        }
+      });
+    }
+  }, [onExternalPlaybackChange]);
 
   if (error) {
     return (
