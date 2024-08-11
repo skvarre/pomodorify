@@ -93,15 +93,38 @@ function App() {
         handleAuthError();
       }
     };
-
+  
     window.addEventListener('message', handleMessage);
-
+  
     // Check for stored token on component mount
     const storedToken = localStorage.getItem('spotifyAccessToken');
     if (storedToken) {
       setAccessToken(storedToken);
     }
-
+  
+    // Restore timer state if available
+    const storedTimerState = localStorage.getItem('timerState');
+    if (storedTimerState) {
+      const {
+        isWorking: storedIsWorking,
+        time: storedTime,
+        isActive: storedIsActive,
+        workSessionCount: storedWorkSessionCount,
+        breakSessionCount: storedBreakSessionCount,
+        completedWorkSessions: storedCompletedWorkSessions
+      } = JSON.parse(storedTimerState);
+  
+      setIsWorking(storedIsWorking);
+      setTime(storedTime);
+      setIsActive(storedIsActive);
+      setWorkSessionCount(storedWorkSessionCount);
+      setBreakSessionCount(storedBreakSessionCount);
+      setCompletedWorkSessions(storedCompletedWorkSessions);
+  
+      // Clear the stored timer state
+      localStorage.removeItem('timerState');
+    }
+  
     return () => {
       window.removeEventListener('message', handleMessage);
     };
@@ -113,13 +136,29 @@ function App() {
         if (disconnectSpotify) {
           disconnectSpotify();
         }
+        
+        // Save timer state to localStorage
+        const timerState = {
+          isWorking,
+          time,
+          isActive,
+          workSessionCount,
+          breakSessionCount,
+          completedWorkSessions
+        };
+        localStorage.setItem('timerState', JSON.stringify(timerState));
+        
+        // Clear Spotify related data
+        setAccessToken(null);
+        localStorage.removeItem('spotifyAccessToken');
+        setSpotifyPlayer(null);
+        setDisconnectSpotify(null);
+        
+        // Only way for other Spotify Apps to notice detachment 
+        window.location.reload();
       });
     }
-    setAccessToken(null);
-    localStorage.removeItem('spotifyAccessToken');
-    setSpotifyPlayer(null);
-    setDisconnectSpotify(null);
-  }, [spotifyPlayer, disconnectSpotify]);
+  }, [spotifyPlayer, disconnectSpotify, isWorking, time, isActive, workSessionCount, breakSessionCount, completedWorkSessions]);
 
   const handleSessionEnd = () => {
     setIsActive(false);
