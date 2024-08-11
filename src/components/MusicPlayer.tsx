@@ -7,6 +7,7 @@ interface MusicPlayerProps {
   setDisconnectFunction: (disconnect: () => void) => void;
   isActive: boolean;
   onAuthError: () => void;
+  onTogglePlayback: () => void;
 }
 
 interface SpotifyTrack {
@@ -18,7 +19,7 @@ interface SpotifyTrack {
   };
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPlayer, setDisconnectFunction, isActive, onAuthError }) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPlayer, setDisconnectFunction, isActive, onAuthError, onTogglePlayback }) => {
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -98,6 +99,12 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
       console.error('Failed to toggle playback');
     }
   }, [isPlaying, spotifyFetch]);
+
+
+  const handleTogglePlayback = useCallback(() => {
+    onTogglePlayback();
+    togglePlayback();
+  }, [onTogglePlayback, togglePlayback]);
 
   const handleTrackChange = useCallback(async (direction: 'next' | 'previous') => {
     await spotifyFetch(`/me/player/${direction}`, { method: 'POST' });
@@ -200,9 +207,16 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
         <div className="flex-grow">
           <div className="font-bold truncate">{currentTrack.name}</div>
           <div className="text-gray-400 text-sm truncate">{currentTrack.artists[0]?.name}</div>
-          <div className="flex items-center mt-4 ml-20">
+          <div className="flex items-center mt-4 ml-16">
             <button onClick={() => handleTrackChange('previous')} className="focus:outline-none">
               <SkipBack className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
+            </button>
+            <button onClick={handleTogglePlayback} className="ml-8 focus:outline-none">
+              {isActive ? (
+                <Pause className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
+              ) : (
+                <Play className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
+              )}
             </button>
             <button onClick={() => handleTrackChange('next')} className="focus:outline-none">
               <SkipForward className="ml-8 w-6 h-6 text-gray-400 hover:text-white transition-colors" />

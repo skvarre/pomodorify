@@ -172,6 +172,17 @@ function App() {
     setIsActive(false);
   };
 
+  const handleTogglePlayback = useCallback(() => {
+    setIsActive((prevIsActive) => !prevIsActive);
+    if (spotifyPlayer) {
+      if (isActive) {
+        spotifyPlayer.pause();
+      } else {
+        spotifyPlayer.resume();
+      }
+    }
+  }, [isActive, spotifyPlayer]);
+
   return (
     <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
@@ -215,6 +226,7 @@ function App() {
                 setDisconnectFunction={setDisconnectSpotify}
                 isActive={isActive} 
                 onAuthError={handleAuthError}
+                onTogglePlayback={handleTogglePlayback}
               />
             ) : (
               <div className="text-white text-center mb-4">Loading Spotify SDK...</div>
