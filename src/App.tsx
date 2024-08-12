@@ -22,7 +22,8 @@ function App() {
   const [timeSettings, setTimeSettings] = useState({
     workTime: 25,
     breakTime: 5,
-    longBreakTime: 15
+    longBreakTime: 15,
+    intervals: 4
   });
   //-------------------------------------------------------------------------------------------------------
   
@@ -115,8 +116,7 @@ function App() {
       setIsWorking(false);
       setBreakSessionCount((prev) => prev + 1);
       
-      // Check if it's time for a long break
-      if (newCompletedSessions % 4 === 0) {
+      if (newCompletedSessions % timeSettings.intervals === 0) {
         setTime(timeSettings.longBreakTime * 60);
       } else {
         setTime(timeSettings.breakTime * 60);
@@ -138,7 +138,7 @@ function App() {
       setTime(timeSettings.workTime * 60);
     } else {
       // Check if it's a long break
-      const isLongBreak = completedWorkSessions % 4 === 0;
+      const isLongBreak = completedWorkSessions % timeSettings.intervals === 0;
       setTime(isLongBreak ? timeSettings.longBreakTime * 60 : timeSettings.breakTime * 60);
     }
   };
@@ -149,7 +149,7 @@ function App() {
       setCompletedWorkSessions(newCompletedSessions);
       setIsWorking(false);
       setBreakSessionCount((prev) => prev + 1);
-      setTime(newCompletedSessions % 4 === 0 ? timeSettings.longBreakTime * 60 : timeSettings.breakTime * 60);
+      setTime(newCompletedSessions % timeSettings.intervals === 0 ? timeSettings.longBreakTime * 60 : timeSettings.breakTime * 60);
     } else {
       setIsWorking(true);
       setWorkSessionCount((prev) => prev + 1);
@@ -178,10 +178,10 @@ function App() {
 
   const handleSaveSettings = (newSettings: TimeSettings) => {
     setTimeSettings(newSettings);
-    // Update the current timer if needed
+
     if (isWorking) {
       setTime(newSettings.workTime * 60);
-    } else if (completedWorkSessions % 4 === 0) {
+    } else if (completedWorkSessions % timeSettings.intervals === 0) {
       setTime(newSettings.longBreakTime * 60);
     } else {
       setTime(newSettings.breakTime * 60);
@@ -274,8 +274,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
-        <h1 className="text-3xl font-bold text-center text-white mb-8">
-          Pomodorify
+        <h1 className="text-5xl font-poppins text-center text-white mb-12">
+          pomodorify
         </h1>
         <div className="relative">
           <Timer 
@@ -297,7 +297,7 @@ function App() {
           <p className="text-center text-white font-semibold">
             {isWorking 
               ? `Work Session #${workSessionCount}` 
-              : `${completedWorkSessions % 4 === 0 ? 'Long' : 'Short'} Break #${breakSessionCount}`}
+              : `${completedWorkSessions % timeSettings.intervals === 0 ? 'Long' : 'Short'} Break #${breakSessionCount}`}
           </p>
         </div>
         {loginError && (

@@ -12,6 +12,7 @@ export interface TimeSettings {
   workTime: number;
   breakTime: number;
   longBreakTime: number;
+  intervals: number; 
 }
 
 const TimeInput: React.FC<{
@@ -96,6 +97,12 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, onSaveSettings, in
             label="Long Break Time"
             name="longBreakTime"
             value={settings.longBreakTime}
+            onChange={handleInputChange}
+          />
+          <TimeInput
+            label="Intervals before Long Break"
+            name="intervals"
+            value={settings.intervals}
             onChange={handleInputChange}
           />
           <button
