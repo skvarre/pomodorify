@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Settings as SettingsIcon } from 'lucide-react';
 import Timer from './components/Timer';
 import MusicPlayer from './components/MusicPlayer';
-import Settings from './components/Settings';
+import Settings, { TimeSettings } from './components/Settings';
 
 function App() {
-  //-------------------------------------------------------------------------------------------------------
+  //----------------------------------------- UseStates --------------------------------------------------------------
   const [isWorking, setIsWorking] = useState(true);
   const [isActive, setIsActive] = useState(false);
   const [time, setTime] = useState(25 * 60); // 25 minutes
@@ -19,6 +19,11 @@ function App() {
   const [isSDKReady, setIsSDKReady] = useState(false);
   const [disconnectSpotify, setDisconnectSpotify] = useState<(() => void) | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [timeSettings, setTimeSettings] = useState({
+    workTime: 25,
+    breakTime: 5,
+    longBreakTime: 15
+  });
   //-------------------------------------------------------------------------------------------------------
   
   /**
@@ -112,14 +117,14 @@ function App() {
       
       // Check if it's time for a long break
       if (newCompletedSessions % 4 === 0) {
-        setTime(15 * 60); // 15 minutes long break
+        setTime(timeSettings.longBreakTime * 60);
       } else {
-        setTime(5 * 60); // 5 minutes short break
+        setTime(timeSettings.breakTime * 60);
       }
     } else {
       setIsWorking(true);
       setWorkSessionCount((prev) => prev + 1);
-      setTime(25 * 60); // 25 minutes work
+      setTime(timeSettings.workTime * 60);
     }
   };
 
@@ -170,6 +175,18 @@ function App() {
   const handleExternalPlaybackChange = useCallback((isPlaying: boolean) => {
     setIsActive(isPlaying);
   }, []);
+
+  const handleSaveSettings = (newSettings: TimeSettings) => {
+    setTimeSettings(newSettings);
+    // Update the current timer if needed
+    if (isWorking) {
+      setTime(newSettings.workTime * 60);
+    } else if (completedWorkSessions % 4 === 0) {
+      setTime(newSettings.longBreakTime * 60);
+    } else {
+      setTime(newSettings.breakTime * 60);
+    }
+  };
   //------------------------------------------------------------------------------------------------------
 
   /*
@@ -319,7 +336,12 @@ function App() {
             </button>
           </>
         )}
-        <Settings isOpen={isSettingsOpen} onClose={closeSettings} />
+        <Settings 
+          isOpen={isSettingsOpen}
+          onClose={closeSettings}
+          onSaveSettings={handleSaveSettings}
+          initialSettings={timeSettings}
+          />
       </div>
     </div>
   );
