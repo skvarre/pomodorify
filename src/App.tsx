@@ -135,11 +135,11 @@ function App() {
   const handleResetTimer = () => {
     setIsActive(false);
     if (isWorking) {
-      setTime(25 * 60); // 25 minutes work
+      setTime(timeSettings.workTime * 60);
     } else {
       // Check if it's a long break
       const isLongBreak = completedWorkSessions % 4 === 0;
-      setTime(isLongBreak ? 15 * 60 : 5 * 60);
+      setTime(isLongBreak ? timeSettings.longBreakTime * 60 : timeSettings.breakTime * 60);
     }
   };
 
@@ -149,11 +149,11 @@ function App() {
       setCompletedWorkSessions(newCompletedSessions);
       setIsWorking(false);
       setBreakSessionCount((prev) => prev + 1);
-      setTime(newCompletedSessions % 4 === 0 ? 15 * 60 : 5 * 60);
+      setTime(newCompletedSessions % 4 === 0 ? timeSettings.longBreakTime * 60 : timeSettings.breakTime * 60);
     } else {
       setIsWorking(true);
       setWorkSessionCount((prev) => prev + 1);
-      setTime(25 * 60);
+      setTime(timeSettings.workTime * 60);
     }
     setIsActive(false);
   };
