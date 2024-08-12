@@ -5,6 +5,7 @@ import MusicPlayer from './components/MusicPlayer';
 import Settings from './components/Settings';
 
 function App() {
+  //-------------------------------------------------------------------------------------------------------
   const [isWorking, setIsWorking] = useState(true);
   const [isActive, setIsActive] = useState(false);
   const [time, setTime] = useState(25 * 60); // 25 minutes
@@ -18,6 +19,11 @@ function App() {
   const [isSDKReady, setIsSDKReady] = useState(false);
   const [disconnectSpotify, setDisconnectSpotify] = useState<(() => void) | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  //-------------------------------------------------------------------------------------------------------
+  
+  /**
+   * ---------------------------------- Event Handlers ---------------------------------------------------
+   */
 
   const loadSpotifySDK = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -37,6 +43,14 @@ function App() {
     });
   }, []);
   
+  const openSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+  }, []);
+
+  const closeSettings = useCallback(() => {
+    setIsSettingsOpen(false);
+  }, []);
+
   const handleLogin = useCallback(() => {
     if (isAuthenticating) return; // Prevent multiple login attempts
 
@@ -57,89 +71,6 @@ function App() {
     setLoginError('Authentication failed. Please try logging in again.');
     setIsAuthenticating(false);
   }, []);
-
-  const openSettings = useCallback(() => {
-    setIsSettingsOpen(true);
-  }, []);
-
-  const closeSettings = useCallback(() => {
-    setIsSettingsOpen(false);
-  }, []);
-
-  useEffect(() => {
-    if (accessToken && !isSDKReady) {
-      loadSpotifySDK()
-        .then(() => {
-          setIsSDKReady(true);
-        })
-        .catch((error) => {
-          console.error("Failed to load Spotify SDK:", error);
-          setLoginError("Failed to load Spotify SDK. Please try again.");
-        });
-    }
-  }, [accessToken, isSDKReady, loadSpotifySDK]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isActive && time > 0) {
-      interval = setInterval(() => {
-        setTime((prevTime) => prevTime - 1);
-      }, 1000);
-    } else if (isActive && time === 0) {
-      handleSessionEnd();
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isActive, time]);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'SPOTIFY_TOKEN') {
-        setAccessToken(event.data.accessToken);
-        localStorage.setItem('spotifyAccessToken', event.data.accessToken);
-        setLoginError(null);
-        setIsAuthenticating(false);
-      } else if (event.data.type === 'SPOTIFY_ERROR') {
-        handleAuthError();
-      }
-    };
-  
-    window.addEventListener('message', handleMessage);
-  
-    // Check for stored token on component mount
-    const storedToken = localStorage.getItem('spotifyAccessToken');
-    if (storedToken) {
-      setAccessToken(storedToken);
-    }
-  
-    // Restore timer state if available
-    const storedTimerState = localStorage.getItem('timerState');
-    if (storedTimerState) {
-      const {
-        isWorking: storedIsWorking,
-        time: storedTime,
-        isActive: storedIsActive,
-        workSessionCount: storedWorkSessionCount,
-        breakSessionCount: storedBreakSessionCount,
-        completedWorkSessions: storedCompletedWorkSessions
-      } = JSON.parse(storedTimerState);
-  
-      setIsWorking(storedIsWorking);
-      setTime(storedTime);
-      setIsActive(storedIsActive);
-      setWorkSessionCount(storedWorkSessionCount);
-      setBreakSessionCount(storedBreakSessionCount);
-      setCompletedWorkSessions(storedCompletedWorkSessions);
-  
-      // Clear the stored timer state
-      localStorage.removeItem('timerState');
-    }
-  
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [handleAuthError]);
 
   const handleLogout = useCallback(() => {
     if (spotifyPlayer) {
@@ -239,7 +170,90 @@ function App() {
   const handleExternalPlaybackChange = useCallback((isPlaying: boolean) => {
     setIsActive(isPlaying);
   }, []);
+  //------------------------------------------------------------------------------------------------------
 
+  /*
+  * ---------------------------------- useEffect ---------------------------------------------------------
+  */
+  useEffect(() => {
+    if (accessToken && !isSDKReady) {
+      loadSpotifySDK()
+        .then(() => {
+          setIsSDKReady(true);
+        })
+        .catch((error) => {
+          console.error("Failed to load Spotify SDK:", error);
+          setLoginError("Failed to load Spotify SDK. Please try again.");
+        });
+    }
+  }, [accessToken, isSDKReady, loadSpotifySDK]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isActive && time > 0) {
+      interval = setInterval(() => {
+        setTime((prevTime) => prevTime - 1);
+      }, 1000);
+    } else if (isActive && time === 0) {
+      handleSessionEnd();
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isActive, time]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'SPOTIFY_TOKEN') {
+        setAccessToken(event.data.accessToken);
+        localStorage.setItem('spotifyAccessToken', event.data.accessToken);
+        setLoginError(null);
+        setIsAuthenticating(false);
+      } else if (event.data.type === 'SPOTIFY_ERROR') {
+        handleAuthError();
+      }
+    };
+  
+    window.addEventListener('message', handleMessage);
+  
+    // Check for stored token on component mount
+    const storedToken = localStorage.getItem('spotifyAccessToken');
+    if (storedToken) {
+      setAccessToken(storedToken);
+    }
+  
+    // Restore timer state if available
+    const storedTimerState = localStorage.getItem('timerState');
+    if (storedTimerState) {
+      const {
+        isWorking: storedIsWorking,
+        time: storedTime,
+        isActive: storedIsActive,
+        workSessionCount: storedWorkSessionCount,
+        breakSessionCount: storedBreakSessionCount,
+        completedWorkSessions: storedCompletedWorkSessions
+      } = JSON.parse(storedTimerState);
+  
+      setIsWorking(storedIsWorking);
+      setTime(storedTime);
+      setIsActive(storedIsActive);
+      setWorkSessionCount(storedWorkSessionCount);
+      setBreakSessionCount(storedBreakSessionCount);
+      setCompletedWorkSessions(storedCompletedWorkSessions);
+  
+      // Clear the stored timer state
+      localStorage.removeItem('timerState');
+    }
+  
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [handleAuthError]);
+  //-------------------------------------------------------------------------------------------------------
+
+  /**
+   * ---------------------------------- JSX ---------------------------------------------------------------
+   */
   return (
     <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
