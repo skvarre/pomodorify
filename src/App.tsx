@@ -323,7 +323,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
-      <img src={image} alt="Pomodorify" className="size-2/12 mx-auto mb-4"/>
+      <img src={image} alt="Pomodorify" className="size-1/12 mx-auto -mb-4"/>
         <h1 className="text-5xl font-poppins text-center text-white mb-12">
           pomodorify
         </h1>
