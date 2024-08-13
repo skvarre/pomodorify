@@ -3,6 +3,7 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import Timer from './components/Timer';
 import MusicPlayer from './components/MusicPlayer';
 import Settings, { TimeSettings } from './components/Settings';
+import Tooltip from './components/Tooltip';
 
 function App() {
   //----------------------------------------- UseStates ---------------------------------------------------
