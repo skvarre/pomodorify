@@ -344,6 +344,7 @@ function App() {
           </div>
         )}
         {!accessToken ? (
+          <Tooltip text="Requires Spotify Premium">
           <button 
             onClick={handleLogin} 
             className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out"
@@ -351,6 +352,7 @@ function App() {
           >
             {isAuthenticating ? 'Logging in...' : 'Login with Spotify'}
           </button>
+        </Tooltip>
         ) : (
           <>
             {isSDKReady ? (
