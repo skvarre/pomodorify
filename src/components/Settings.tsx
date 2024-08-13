@@ -12,7 +12,8 @@ export interface TimeSettings {
   workTime: number;
   breakTime: number;
   longBreakTime: number;
-  intervals: number; 
+  intervals: number;
+  autoplay: boolean; 
 }
 
 const TimeInput: React.FC<{
@@ -43,10 +44,17 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, onSaveSettings, in
   const settingsRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
     setSettings(prevSettings => ({
       ...prevSettings,
-      [name]: parseInt(value, 10)
+      [name]: type === 'checkbox' ? checked : parseInt(value, 10)
+    }));
+  };
+
+  const handleToggleChange = () => {
+    setSettings(prevSettings => ({
+      ...prevSettings,
+      autoplay: !prevSettings.autoplay
     }));
   };
   
@@ -105,6 +113,21 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, onSaveSettings, in
             value={settings.intervals}
             onChange={handleInputChange}
           />
+          <div className="my-6 flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-300">Auto start sessions</span>
+            <button 
+              onClick={handleToggleChange}
+              className={`w-11 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out ${
+                settings.autoplay ? 'bg-blue-500' : 'bg-gray-700'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                  settings.autoplay ? 'translate-x-5' : ''
+                }`}
+              />
+            </button>
+          </div>
           <button
             onClick={handleSave}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out"

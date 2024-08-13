@@ -131,7 +131,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
     });
 
     player.addListener('ready', ({ device_id }) => {
-      console.log('Spotify player ready with Device ID:', device_id);
+      console.log('Spotify player ready');
       deviceIdRef.current = device_id;
       spotifyFetch('/me/player', {
         method: 'PUT',

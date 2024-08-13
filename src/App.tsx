@@ -23,7 +23,8 @@ function App() {
     workTime: 25,
     breakTime: 5,
     longBreakTime: 15,
-    intervals: 4
+    intervals: 4,
+    autoplay: false
   });
   //-------------------------------------------------------------------------------------------------------
   
@@ -108,8 +109,8 @@ function App() {
     }
   }, [spotifyPlayer, disconnectSpotify, isWorking, time, isActive, workSessionCount, breakSessionCount, completedWorkSessions]);
 
+
   const handleSessionEnd = () => {
-    setIsActive(false);
     if (isWorking) {
       const newCompletedSessions = completedWorkSessions + 1;
       setCompletedWorkSessions(newCompletedSessions);
@@ -126,6 +127,8 @@ function App() {
       setWorkSessionCount((prev) => prev + 1);
       setTime(timeSettings.workTime * 60);
     }
+    // Keeps the timer running if autoplay is enabled
+    setIsActive(timeSettings.autoplay)
   };
 
   const handleToggleTimer = () => {
