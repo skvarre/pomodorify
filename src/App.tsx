@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Info } from 'lucide-react';
 import Timer from './components/Timer';
 import MusicPlayer from './components/MusicPlayer';
 import Settings, { TimeSettings } from './components/Settings';
 import Tooltip from './components/Tooltip';
+import AboutModal from './components/AboutModal';
 
 function App() {
   //----------------------------------------- UseStates ---------------------------------------------------
@@ -20,6 +21,7 @@ function App() {
   const [isSDKReady, setIsSDKReady] = useState(false);
   const [disconnectSpotify, setDisconnectSpotify] = useState<(() => void) | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false); 
   const [timeSettings, setTimeSettings] = useState({
     workTime: 25,
     breakTime: 5,
@@ -82,6 +84,14 @@ function App() {
 
   const closeSettings = useCallback(() => {
     setIsSettingsOpen(false);
+  }, []);
+
+  const openAbout = useCallback(() => {
+    setIsAboutOpen(true);
+  }, []);
+
+  const closeAbout = useCallback(() => {
+    setIsAboutOpen(false);
   }, []);
 
   const handleLogin = useCallback(() => {
@@ -316,6 +326,12 @@ function App() {
           pomodorify
         </h1>
         <div className="relative">
+          <button 
+            onClick={openAbout}
+            className="absolute text-white top-2 left-2 hover:text-gray-300 transition-colors"
+          >
+            <Info size={28} />
+          </button>
           <Timer 
             time={time}
             isActive={isActive}
@@ -382,6 +398,7 @@ function App() {
           onSaveSettings={handleSaveSettings}
           initialSettings={timeSettings}
           />
+        <AboutModal isOpen={isAboutOpen} onClose={closeAbout} />
       </div>
     </div>
   );
