@@ -218,8 +218,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = React.memo(({ accessToken, setPl
           className="w-20 h-20 rounded-md shadow-md" 
           alt={currentTrack.album.name || "Album cover"} 
         />
-        <div className="flex-grow">
-          <div className="font-bold truncate">{currentTrack.name}</div>
+        <div className="flex-grow flex flex-col min-w-0">
+          <div className="font-bold leading-tight break-words">{currentTrack.name}</div>
           <div className="text-gray-400 text-sm truncate">{currentTrack.artists[0]?.name}</div>
           <div className="flex items-center mt-4 ml-16">
             <button onClick={() => handleTrackChange('previous')} className="focus:outline-none">
