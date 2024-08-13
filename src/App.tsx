@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Settings as SettingsIcon } from 'lucide-react';
 import Timer from './components/Timer';
 import MusicPlayer from './components/MusicPlayer';
 import Settings, { TimeSettings } from './components/Settings';
 
 function App() {
-  //----------------------------------------- UseStates --------------------------------------------------------------
+  //----------------------------------------- UseStates ---------------------------------------------------
   const [isWorking, setIsWorking] = useState(true);
   const [isActive, setIsActive] = useState(false);
   const [time, setTime] = useState(25 * 60); // 25 minutes
@@ -24,13 +24,38 @@ function App() {
     breakTime: 5,
     longBreakTime: 15,
     intervals: 4,
-    autoplay: false
+    autoplay: true,
+    bellSound: true
   });
+  // ------------------------------------------ REFS ------------------------------------------------------
+  const [bellAudio] = useState(new Audio('/sounds/bell.mp3'));
+  const spotifyPlayerRef = useRef<Spotify.Player | null>(null);
   //-------------------------------------------------------------------------------------------------------
   
   /**
    * ---------------------------------- Event Handlers ---------------------------------------------------
    */
+
+  const playBellAndPauseSpotify = useCallback(async () => {
+    if (timeSettings.bellSound) {
+      if (spotifyPlayerRef.current) {
+        await spotifyPlayerRef.current.pause();
+      }
+      
+      bellAudio.currentTime = 0; // Reset audio to start
+      await bellAudio.play();
+      
+      // Resume Spotify playback after bell sound finishes
+      bellAudio.onended = () => {
+        if (spotifyPlayerRef.current && timeSettings.autoplay) {
+          spotifyPlayerRef.current.resume();
+        }
+      };
+    } else if (timeSettings.autoplay && spotifyPlayerRef.current) {
+      // If bell sound is off but autoplay is on, just resume Spotify
+      spotifyPlayerRef.current.resume();
+    }
+  }, [bellAudio, timeSettings.autoplay, timeSettings.bellSound]);
 
   const loadSpotifySDK = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -93,7 +118,8 @@ function App() {
           isActive,
           workSessionCount,
           breakSessionCount,
-          completedWorkSessions
+          completedWorkSessions,
+          timeSettings
         };
         localStorage.setItem('timerState', JSON.stringify(timerState));
         
@@ -107,10 +133,12 @@ function App() {
         window.location.reload();
       });
     }
-  }, [spotifyPlayer, disconnectSpotify, isWorking, time, isActive, workSessionCount, breakSessionCount, completedWorkSessions]);
+  }, [spotifyPlayer, disconnectSpotify, isWorking, time, isActive, workSessionCount, breakSessionCount, completedWorkSessions, timeSettings]);
 
 
-  const handleSessionEnd = () => {
+  const handleSessionEnd = useCallback(() => {
+    playBellAndPauseSpotify();
+
     if (isWorking) {
       const newCompletedSessions = completedWorkSessions + 1;
       setCompletedWorkSessions(newCompletedSessions);
@@ -127,9 +155,13 @@ function App() {
       setWorkSessionCount((prev) => prev + 1);
       setTime(timeSettings.workTime * 60);
     }
-    // Keeps the timer running if autoplay is enabled
-    setIsActive(timeSettings.autoplay)
-  };
+
+    if (timeSettings.autoplay) {
+      setIsActive(true);
+    } else {
+      setIsActive(false);
+    }
+  }, [isWorking, completedWorkSessions, timeSettings, playBellAndPauseSpotify]);
 
   const handleToggleTimer = () => {
     setIsActive((prev) => !prev);
@@ -251,7 +283,8 @@ function App() {
         isActive: storedIsActive,
         workSessionCount: storedWorkSessionCount,
         breakSessionCount: storedBreakSessionCount,
-        completedWorkSessions: storedCompletedWorkSessions
+        completedWorkSessions: storedCompletedWorkSessions,
+        timeSettings: storedTimeSettings
       } = JSON.parse(storedTimerState);
   
       setIsWorking(storedIsWorking);
@@ -260,6 +293,7 @@ function App() {
       setWorkSessionCount(storedWorkSessionCount);
       setBreakSessionCount(storedBreakSessionCount);
       setCompletedWorkSessions(storedCompletedWorkSessions);
+      setTimeSettings(storedTimeSettings);
   
       // Clear the stored timer state
       localStorage.removeItem('timerState');

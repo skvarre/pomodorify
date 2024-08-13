@@ -14,6 +14,7 @@ export interface TimeSettings {
   longBreakTime: number;
   intervals: number;
   autoplay: boolean; 
+  bellSound: boolean; 
 }
 
 const TimeInput: React.FC<{
@@ -51,10 +52,10 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, onSaveSettings, in
     }));
   };
 
-  const handleToggleChange = () => {
+  const handleToggleChange = (setting: 'autoplay' | 'bellSound') => {
     setSettings(prevSettings => ({
       ...prevSettings,
-      autoplay: !prevSettings.autoplay
+      [setting]: !prevSettings[setting]
     }));
   };
   
@@ -116,7 +117,7 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, onSaveSettings, in
           <div className="my-6 flex items-center justify-between">
             <span className="text-sm font-medium text-gray-300">Auto start sessions</span>
             <button 
-              onClick={handleToggleChange}
+              onClick={() => handleToggleChange('autoplay')}
               className={`w-11 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out ${
                 settings.autoplay ? 'bg-blue-500' : 'bg-gray-700'
               }`}
@@ -128,6 +129,21 @@ const Settings: React.FC<SettingsProps> = ({ isOpen, onClose, onSaveSettings, in
               />
             </button>
           </div>
+          <div className="mb-4 flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-300">Bell sound at end of session</span>
+          <button 
+            onClick={() => handleToggleChange('bellSound')}
+            className={`w-11 h-6 flex items-center rounded-full p-1 duration-300 ease-in-out ${
+              settings.bellSound ? 'bg-blue-500' : 'bg-gray-700'
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                settings.bellSound ? 'translate-x-5' : ''
+              }`}
+            />
+          </button>
+        </div>
           <button
             onClick={handleSave}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out"
