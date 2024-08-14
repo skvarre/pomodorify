@@ -2,7 +2,7 @@ const axios = require('axios');
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || 'https://your-app-name.vercel.app/api/callback';
+const REDIRECT_URI = process.env.REDIRECT_URI || 'https://pomodorify.vercel.app/api/callback';
 
 module.exports = async (req, res) => {
   const code = req.query.code || null;
