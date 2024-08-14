@@ -41,14 +41,13 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         </div>
         <div className="text-gray-300 space-y-4">
           <p>
-            Pomodorify is a Pomodoro timer app that integrates with Spotify to help you focus and manage your time effectively.
+            Pomodorify is a Pomodoro timer app that integrates with Spotify to help you focus and manage your time effectively with the <a href="https://en.wikipedia.org/wiki/Pomodoro_Technique" className="text-blue-400">Pomodoro technique</a>
           </p>
           <h3 className="text-xl font-semibold text-white">How it works</h3>
           <ul className="list-disc list-inside space-y-2">
             <li>Set your work and break intervals</li>
             <li>Connect your Spotify account to control your music (requires Spotify Premium)</li>
-            <li>Use the timer to manage your work sessions</li>
-            <li>Enjoy automated music controls based on your work/break cycles</li>
+            <li>The timer integrates with Spotify and notifies you when it is time to take a break</li>
           </ul>
           <h3 className="text-xl font-semibold text-white">Privacy and Data Usage</h3>
           <ul className="list-disc list-inside space-y-2">
