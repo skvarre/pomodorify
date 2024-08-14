@@ -1,7 +1,7 @@
 const querystring = require('querystring');
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-const REDIRECT_URI = process.env.REDIRECT_URI || 'https://pomodorify.app/api/callback';
+const REDIRECT_URI = process.env.REDIRECT_URI || 'https://pomodorify.vercel.app/api/callback';
 
 module.exports = (req, res) => {
   res.redirect('https://accounts.spotify.com/authorize?' +

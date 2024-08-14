@@ -99,7 +99,7 @@ function App() {
     if (isAuthenticating) return; // Prevent multiple login attempts
 
     setIsAuthenticating(true);
-    const popup = window.open('http://localhost:8888/login', 'Login with Spotify', 'width=800,height=600');
+    const popup = window.open('/api/login', 'Login with Spotify', 'width=800,height=600');
     
     if (popup) {
       popup.focus();
